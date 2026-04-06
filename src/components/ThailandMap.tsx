@@ -4,7 +4,6 @@ import { geoCentroid } from "d3-geo";
 
 const geoUrl = "https://raw.githubusercontent.com/cvibhagool/thailand-map/master/thailand-provinces.topojson";
 
-// พจนานุกรมแปลชื่อภาษาอังกฤษเป็นภาษาไทย (ย่อคำยาวๆ เพื่อไม่ให้ทับกัน)
 const provinceThMap: Record<string, string> = {
   "Amnat Charoen": "อำนาจเจริญ", "Ang Thong": "อ่างทอง", "Bangkok Metropolis": "กทม.", "Bangkok Metrop.": "กทม.", "Bangkok": "กทม.",
   "Bueng Kan": "บึงกาฬ", "Buri Ram": "บุรีรัมย์", "Chachoengsao": "ฉะเชิงเทรา", "Chai Nat": "ชัยนาท", "Chaiyaphum": "ชัยภูมิ",
@@ -26,23 +25,32 @@ const provinceThMap: Record<string, string> = {
   "Yala": "ยะลา", "Yasothon": "ยโสธร"
 };
 
+// 🌟 ข้อมูลจำลอง (Mock Data) สำหรับแอปบริจาค
+const mockDonationData: Record<string, { schools: number; totalAmount: number; transactions: number }> = {
+  "กทม.": { schools: 145, totalAmount: 5450000, transactions: 1250 },
+  "เชียงใหม่": { schools: 89, totalAmount: 1250000, transactions: 840 },
+  "ขอนแก่น": { schools: 112, totalAmount: 850500, transactions: 620 },
+  "ภูเก็ต": { schools: 34, totalAmount: 3400000, transactions: 950 },
+  "ลำปาง": { schools: 45, totalAmount: 450000, transactions: 310 },
+  // จังหวัดอื่นๆ ที่ไม่มีใน Mock จะเป็น 0 โดยอัตโนมัติ
+};
+
 export default function ThailandMap() {
   const [selectedProvince, setSelectedProvince] = useState<string | null>(null);
   const [position, setPosition] = useState({ coordinates: [100.5, 13.5] as [number, number], zoom: 1 });
 
-  const handleZoomIn = () => {
-    if (position.zoom >= 4) return;
-    setPosition((pos) => ({ ...pos, zoom: pos.zoom * 1.5 }));
-  };
+  const handleZoomIn = () => { if (position.zoom >= 4) return; setPosition((pos) => ({ ...pos, zoom: pos.zoom * 1.5 })); };
+  const handleZoomOut = () => { if (position.zoom <= 1) return; setPosition((pos) => ({ ...pos, zoom: pos.zoom / 1.5 })); };
+  const handleMoveEnd = (position: any) => { setPosition(position); };
 
-  const handleZoomOut = () => {
-    if (position.zoom <= 1) return;
-    setPosition((pos) => ({ ...pos, zoom: pos.zoom / 1.5 }));
-  };
+  // ดึงข้อมูลจังหวัดที่ถูกเลือก (ถ้าไม่มีข้อมูลให้เป็น 0)
+  const provinceData = selectedProvince 
+    ? (mockDonationData[selectedProvince] || { schools: 0, totalAmount: 0, transactions: 0 }) 
+    : null;
 
-  const handleMoveEnd = (position: any) => {
-    setPosition(position);
-  };
+  // ฟังก์ชันจัดรูปแบบตัวเลข (เพิ่มลูกน้ำ และ ใส่ ฿)
+  const formatNumber = (num: number) => new Intl.NumberFormat('th-TH').format(num);
+  const formatCurrency = (num: number) => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', minimumFractionDigits: 0 }).format(num);
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-zinc-50 text-zinc-900">
@@ -53,31 +61,20 @@ export default function ThailandMap() {
         <div className="w-full h-full flex items-center justify-center">
           <ComposableMap
             projection="geoMercator"
-            projectionConfig={{
-              scale: 2000,
-              center: [100.5, 13.5],
-            }}
+            projectionConfig={{ scale: 2000, center: [100.5, 13.5] }}
             className="w-full h-full max-h-[90vh]"
           >
-            <ZoomableGroup
-              zoom={position.zoom}
-              center={position.coordinates}
-              onMoveEnd={handleMoveEnd}
-              maxZoom={4}
-            >
+            <ZoomableGroup zoom={position.zoom} center={position.coordinates} onMoveEnd={handleMoveEnd} maxZoom={4}>
               <Geographies geography={geoUrl}>
                 {({ geographies }) =>
                   geographies.map((geo) => {
                     const provinceNameEng = geo.properties.NAME_1; 
-                    // แปลงชื่อภาษาอังกฤษเป็นภาษาไทย (ถ้าไม่มีในดิกชินารี ให้ใช้ชื่อเดิมไปก่อน)
                     const provinceNameTh = provinceThMap[provinceNameEng] || provinceNameEng;
-                    
                     const isSelected = selectedProvince === provinceNameTh;
                     const centroid = geoCentroid(geo);
 
                     return (
                       <g key={geo.rsmKey}>
-                        
                         <Geography
                           geography={geo}
                           onClick={() => setSelectedProvince(provinceNameTh)}
@@ -100,24 +97,17 @@ export default function ThailandMap() {
                             },
                           }}
                         />
-
-                        {/* ชื่อจังหวัด (ภาษาไทย) */}
-                        {/* ชื่อจังหวัด (ภาษาไทย) */}
                         <Marker coordinates={centroid}>
                           <text
                             textAnchor="middle"
                             y={1.5}
-                            // เปลี่ยนเป็น font-bold และเพิ่ม tracking-wide เพื่อให้ช่องไฟกว้างขึ้นนิดนึง
                             className="pointer-events-none select-none font-bold tracking-wide transition-colors duration-300"
                             style={{ 
-                              // ขยายขนาดฟอนต์ขึ้นจาก 5 เป็น 5.5
                               fontSize: `${5.5 / position.zoom}px`,
-                              fill: isSelected ? "#ffffff" : "#475569", // ตัวอักษรสีขาวเมื่อเลือก, สีเทาเข้ม (slate-600) ตอนปกติ
-                              
-                              // เทคนิคการทำ Halo Effect (ขอบตัวหนังสือ) ให้อ่านง่าย
+                              fill: isSelected ? "#ffffff" : "#475569",
                               paintOrder: "stroke fill",
-                              stroke: isSelected ? "#0284c7" : "#ffffff", // ขอบขาวตอนปกติ, ขอบน้ำเงินตอนกด
-                              strokeWidth: `${1.2 / position.zoom}px`, // ความหนาของขอบตัวหนังสือ
+                              stroke: isSelected ? "#0284c7" : "#ffffff",
+                              strokeWidth: `${1.2 / position.zoom}px`,
                               strokeLinecap: "round",
                               strokeLinejoin: "round",
                             }}
@@ -125,7 +115,6 @@ export default function ThailandMap() {
                             {provinceNameTh}
                           </text>
                         </Marker>
-
                       </g>
                     );
                   })
@@ -135,89 +124,86 @@ export default function ThailandMap() {
           </ComposableMap>
         </div>
         
-        {/* กลุ่มปุ่ม Zoom */}
+        {/* ปุ่ม Zoom */}
         <div className="absolute bottom-8 right-8 flex gap-1 bg-white p-1 rounded-xl shadow-md border border-zinc-200">
-          <button 
-            onClick={handleZoomOut}
-            className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-zinc-100 text-zinc-500 hover:text-zinc-900 font-medium text-2xl transition-colors cursor-pointer"
-          >
-            −
-          </button>
+          <button onClick={handleZoomOut} className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-zinc-100 text-zinc-500 hover:text-zinc-900 font-medium text-2xl transition-colors cursor-pointer">−</button>
           <div className="w-[1px] bg-zinc-200 my-2"></div>
-          <button 
-            onClick={handleZoomIn}
-            className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-zinc-100 text-zinc-500 hover:text-zinc-900 font-medium text-2xl transition-colors cursor-pointer"
-          >
-            +
-          </button>
-        </div>
-
-        <div className="absolute bottom-6 left-6 text-sm text-zinc-400 font-medium bg-white/80 p-2 rounded-lg backdrop-blur-sm">
-          *คลิกและลากเพื่อเลื่อนแผนที่ / ใช้ปุ่มขวาล่างเพื่อซูม
+          <button onClick={handleZoomIn} className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-zinc-100 text-zinc-500 hover:text-zinc-900 font-medium text-2xl transition-colors cursor-pointer">+</button>
         </div>
       </div>
 
-      {/* ส่วนขวา: Side Panel */}
-      <div className="w-full md:w-[380px] lg:w-[450px] border-l border-zinc-200 p-10 flex flex-col justify-between bg-white z-10 shadow-[-10px_0_30px_rgba(0,0,0,0.02)]">
+      {/* ส่วนขวา: Side Panel สรุปข้อมูลการบริจาค */}
+      <div className="w-full md:w-[380px] lg:w-[450px] border-l border-zinc-200 p-10 flex flex-col justify-between bg-white z-10 shadow-[-10px_0_30px_rgba(0,0,0,0.02)] overflow-y-auto">
         <div>
-          <header className="mb-12">
-            <h1 className="text-sm font-bold uppercase tracking-widest text-sky-600 mb-2">
-              Thailand Interactive Map
+          <header className="mb-10">
+            <h1 className="text-sm font-bold uppercase tracking-widest text-emerald-600 mb-2 flex items-center gap-2">
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" fillRule="evenodd"></path></svg>
+              School Donation Tracker
             </h1>
             <h2 className="text-4xl font-extrabold text-zinc-950 tracking-tighter">
-              ระบบเลือกจังหวัด
+              ระบบติดตาม<br/>ยอดบริจาค
             </h2>
           </header>
 
-          {selectedProvince ? (
+          {selectedProvince && provinceData ? (
             <article className="space-y-6 animate-fade-in">
-              <div className="p-6 rounded-3xl bg-sky-50 border border-sky-100 shadow-sm">
-                <p className="text-sm text-sky-700 font-medium mb-1">จังหวัดที่เลือก</p>
-                <h3 className="text-4xl font-extrabold text-sky-950 tracking-tight">
+              <div className="p-6 rounded-3xl bg-emerald-50 border border-emerald-100 shadow-sm">
+                <p className="text-sm text-emerald-700 font-medium mb-1">พื้นที่จังหวัด</p>
+                <h3 className="text-4xl font-extrabold text-emerald-950 tracking-tight mb-4">
                   {selectedProvince}
                 </h3>
+                <div className="pt-4 border-t border-emerald-200/50">
+                  <p className="text-sm text-emerald-700 font-medium mb-1">ยอดบริจาคสะสม</p>
+                  <p className="text-3xl font-black text-emerald-600 tracking-tight">
+                    {formatCurrency(provinceData.totalAmount)}
+                  </p>
+                </div>
               </div>
               
               <div className="space-y-3">
-                <h4 className="text-lg font-semibold text-zinc-800">ข้อมูลเบื้องต้น</h4>
+                <h4 className="text-lg font-semibold text-zinc-800">ข้อมูลรายละเอียด</h4>
                 <div className="grid grid-cols-2 gap-4">
-                  <InfoCard title="ภูมิภาค" value="-" />
-                  <InfoCard title="พื้นที่" value="- ตร.กม." />
-                  <InfoCard title="ประชากร" value="- คน" />
+                  <InfoCard title="โรงเรียนที่เข้าร่วม" value={`${formatNumber(provinceData.schools)} แห่ง`} />
+                  <InfoCard title="จำนวนรายการบริจาค" value={`${formatNumber(provinceData.transactions)} รายการ`} />
                 </div>
               </div>
 
-              <button 
-                onClick={() => setSelectedProvince(null)}
-                className="w-full text-center mt-8 px-6 py-3 rounded-xl bg-zinc-900 text-white font-semibold text-sm hover:bg-zinc-700 transition cursor-pointer shadow-md"
-              >
-                ล้างการเลือก
-              </button>
+              <div className="flex gap-3 mt-8">
+                <button className="flex-1 text-center px-4 py-3 rounded-xl bg-emerald-600 text-white font-semibold text-sm hover:bg-emerald-700 transition cursor-pointer shadow-md">
+                  ดูรายชื่อโรงเรียน
+                </button>
+                <button 
+                  onClick={() => setSelectedProvince(null)}
+                  className="px-6 py-3 rounded-xl bg-zinc-100 text-zinc-700 font-semibold text-sm hover:bg-zinc-200 transition cursor-pointer"
+                >
+                  ปิด
+                </button>
+              </div>
             </article>
           ) : (
             <div className="py-20 text-center border-2 border-dashed border-zinc-200 rounded-3xl bg-zinc-50/50 flex flex-col items-center">
               <div className="w-20 h-20 rounded-full bg-white flex items-center justify-center mb-6 border border-zinc-200 shadow-sm">
-                <svg className="w-10 h-10 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                <svg className="w-10 h-10 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 11l3-3m0 0l3 3m-3-3v8m0-13a9 9 0 110 18 9 9 0 010-18z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold text-zinc-800 mb-2">ยังไม่ได้เลือกจังหวัด</h3>
+              <h3 className="text-xl font-bold text-zinc-800 mb-2">เลือกจังหวัดเพื่อดูยอดบริจาค</h3>
               <p className="text-zinc-500 max-w-xs text-sm">
-                กรุณาคลิกพื้นที่บนแผนที่ทางด้านซ้ายเพื่อดูรายละเอียด
+                คลิกที่พื้นที่บนแผนที่เพื่อดูจำนวนโรงเรียนและยอดบริจาคสะสมของจังหวัดนั้นๆ
               </p>
             </div>
           )}
         </div>
 
-        <footer className="text-center text-xs text-zinc-400 pt-10 border-t border-zinc-100">
-          Created with Vite + React + Bun + Tailwind 4
+        <footer className="text-center text-xs text-zinc-400 pt-10 border-t border-zinc-100 mt-8">
+          ระบบจัดการยอดบริจาคโรงเรียน
         </footer>
       </div>
     </div>
   );
 }
 
+// Component สำหรับแสดง Card ข้อมูล (ปรับดีไซน์นิดหน่อย)
 interface InfoCardProps {
   title: string;
   value: string;
@@ -225,8 +211,8 @@ interface InfoCardProps {
 function InfoCard({ title, value }: InfoCardProps) {
   return (
     <div className="bg-white p-5 rounded-2xl border border-zinc-100 shadow-sm hover:shadow-md transition-shadow">
-      <p className="text-xs text-zinc-500 mb-1 font-medium">{title}</p>
-      <p className="text-lg font-bold text-zinc-900">{value}</p>
+      <p className="text-xs text-zinc-500 mb-2 font-medium">{title}</p>
+      <p className="text-xl font-bold text-zinc-900">{value}</p>
     </div>
   );
 }
