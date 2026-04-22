@@ -39,23 +39,20 @@ type ProvinceData = { totalBooks: number; schools: SchoolDonation[] };
 
 const calculateStatus = (data: ProvinceData | null) => {
   if (!data || data.schools.length === 0) return "ยังไม่บริจาค";
-  
   const completedCount = data.schools.filter(s => s.status === 'completed').length;
   const pendingCount = data.schools.filter(s => s.status === 'pending').length;
-
   if (completedCount >= 2) return "บริจาคซ้ำ";
   if (completedCount === 1) return "บริจาคแล้ว";
   if (pendingCount > 0) return "กำลังดำเนินการ";
   return "ยังไม่บริจาค";
 };
 
-// 🎨 ฟังก์ชันกำหนดสีแผนที่
 const getProvinceColor = (status: string) => {
   switch (status) {
-    case "บริจาคซ้ำ": return "#1e3a8a"; // น้ำเงินเข้ม
-    case "บริจาคแล้ว": return "#38bdf8"; // ฟ้า
-    case "กำลังดำเนินการ": return "#ce9a2d"; // สีที่แก้ไขใหม่ (ทอง/ส้ม)
-    default: return "#d4d4d8"; // เทา
+    case "บริจาคซ้ำ": return "#1e3a8a"; 
+    case "บริจาคแล้ว": return "#38bdf8"; 
+    case "กำลังดำเนินการ": return "#ce9a2d"; 
+    default: return "#d4d4d8"; 
   }
 };
 
@@ -65,7 +62,7 @@ const generateInitialData = () => {
       totalBooks: 8500, 
       schools: [
         { name: "โรงเรียนเตรียมอุดมศึกษา", books: 5000, company: "บริษัท ไทยเบฟเวอเรจ จำกัด (มหาชน)", status: 'completed' },
-        { name: "โรงเรียนสวนกุหลาบวิทยาลัย", books: 3500, company: "บริษัท อมรินทร์ คอร์เปอเรชั่น จำกัด (มหาชน)", status: 'pending' }, // เปลี่ยนกทมให้มี pending ไว้เทสต์
+        { name: "โรงเรียนสวนกุหลาบวิทยาลัย", books: 3500, company: "บริษัท อมรินทร์ คอร์เปอเรชั่น จำกัด (มหาชน)", status: 'pending' }, 
       ]
     }
   };
@@ -89,7 +86,6 @@ const generateInitialData = () => {
         for (let i = 0; i < schoolCount; i++) {
           const books = Math.floor(Math.random() * 2000) + 500;
           const randomCompany = thaiBevCompanies[Math.floor(Math.random() * thaiBevCompanies.length)];
-          // สุ่มผสม pending และ completed ให้ดูสมจริง
           const indvStatus = Math.random() > 0.3 ? generateStatus : (generateStatus === 'completed' ? 'pending' : 'completed');
           generatedSchools.push({ name: `โรงเรียนชุมชน${province} ${i+1}`, books, company: randomCompany, status: indvStatus });
           currentTotal += books;
@@ -114,7 +110,6 @@ export default function ThailandMap() {
   const handleZoomOut = () => { if (position.zoom <= 1) return; setPosition((pos) => ({ ...pos, zoom: pos.zoom / 1.5 })); };
   const handleMoveEnd = (position: any) => { setPosition(position); };
 
-  // 📌 ฟังก์ชันเพิ่มข้อมูลใหม่
   const handleAddNewDonation = (province: string, schoolName: string, company: string, books: number, status: 'completed' | 'pending') => {
     setDonationData(prev => {
       const prevProvData = prev[province] || { totalBooks: 0, schools: [] };
@@ -122,35 +117,40 @@ export default function ThailandMap() {
         ...prev,
         [province]: {
           totalBooks: prevProvData.totalBooks + books,
-          schools: [
-            { name: schoolName, books, company, status },
-            ...prevProvData.schools
-          ]
+          schools: [{ name: schoolName, books, company, status }, ...prevProvData.schools]
         }
       };
     });
     setSelectedProvince(province);
   };
 
-  // 📌 1. ฟังก์ชันใหม่: สำหรับเปลี่ยนสถานะโครงการ (Toggle Status)
-  const handleToggleStatus = (province: string, schoolIndex: number) => {
+  // 📌 ฟังก์ชันเปลี่ยนสถานะ (ล็อคให้เปลี่ยนเป็น 'completed' ได้ทางเดียว)
+  const handleCompleteStatus = (province: string, schoolIndex: number) => {
+    setDonationData(prev => {
+      const prevProvData = prev[province];
+      if (!prevProvData) return prev;
+      const newSchools = [...prevProvData.schools];
+      newSchools[schoolIndex] = { ...newSchools[schoolIndex], status: 'completed' };
+      return { ...prev, [province]: { ...prevProvData, schools: newSchools } };
+    });
+  };
+
+  // 📌 1. ฟังก์ชันใหม่: ลบโครงการ (ลบได้เฉพาะสถานะ pending)
+  const handleDeleteDonation = (province: string, schoolIndex: number) => {
+    const isConfirm = window.confirm("คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้?");
+    if (!isConfirm) return;
+
     setDonationData(prev => {
       const prevProvData = prev[province];
       if (!prevProvData) return prev;
       
       const newSchools = [...prevProvData.schools];
-      const currentStatus = newSchools[schoolIndex].status;
+      const removedSchool = newSchools.splice(schoolIndex, 1)[0]; // ลบออกจาก Array
       
-      // สลับสถานะ
-      newSchools[schoolIndex] = {
-        ...newSchools[schoolIndex],
-        status: currentStatus === 'pending' ? 'completed' : 'pending'
-      };
-
       return {
         ...prev,
         [province]: {
-          ...prevProvData,
+          totalBooks: prevProvData.totalBooks - removedSchool.books, // ลบยอดรวมออกด้วย
           schools: newSchools
         }
       };
@@ -176,7 +176,6 @@ export default function ThailandMap() {
         companies={thaiBevCompanies}
       />
 
-      {/* Modal รายละเอียดโรงเรียน */}
       {isListModalOpen && selectedProvince && provinceData && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-zinc-900/40 backdrop-blur-sm animate-fade-in">
           <div className="bg-white w-full max-w-3xl max-h-[85vh] rounded-3xl shadow-2xl flex flex-col overflow-hidden">
@@ -195,7 +194,7 @@ export default function ThailandMap() {
             <div className="p-6 overflow-y-auto flex-1 bg-white">
               <div className="space-y-4">
                 {provinceData.schools.length > 0 ? provinceData.schools.map((school, index) => (
-                  <div key={index} className="flex flex-col sm:flex-row sm:items-center justify-between p-5 rounded-2xl border border-zinc-200 bg-white shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
+                  <div key={index} className="flex flex-col sm:flex-row sm:items-center justify-between p-5 rounded-2xl border border-zinc-200 bg-white shadow-sm transition-shadow relative overflow-hidden">
                     <div className={`absolute top-0 bottom-0 left-0 w-1.5 transition-colors ${school.status === 'completed' ? 'bg-emerald-500' : 'bg-[#ce9a2d]'}`}></div>
                     
                     <div className="mb-2 sm:mb-0 pl-3 flex-1">
@@ -210,21 +209,31 @@ export default function ThailandMap() {
                       </p>
                     </div>
                     
-                    {/* 📌 2. ส่วนแสดงตัวเลขและปุ่มเปลี่ยนสถานะ */}
                     <div className="text-left sm:text-right pl-3 sm:pl-0 flex flex-col items-start sm:items-end">
                       <p className="text-2xl font-black text-emerald-600">{formatNumber(school.books)} <span className="text-lg font-bold">เล่ม</span></p>
                       
-                      {/* ปุ่มกดสลับสถานะ */}
-                      <button 
-                        onClick={() => handleToggleStatus(selectedProvince, index)}
-                        className={`mt-2 text-xs px-3 py-1.5 rounded-full font-bold transition-all border cursor-pointer ${
-                          school.status === 'pending' 
-                            ? 'bg-white border-emerald-500 text-emerald-600 hover:bg-emerald-50' 
-                            : 'bg-zinc-50 border-zinc-200 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600'
-                        }`}
-                      >
-                        {school.status === 'pending' ? '✅ ปรับเป็นสำเร็จ' : '↺ ยกเลิกการสำเร็จ'}
-                      </button>
+                      {/* 📌 2. แสดงปุ่มแก้ไขเฉพาะยอดที่ยัง Pending */}
+                      {school.status === 'pending' ? (
+                        <div className="flex gap-2 mt-2">
+                          <button 
+                            onClick={() => handleCompleteStatus(selectedProvince, index)}
+                            className="text-xs px-3 py-1.5 rounded-full font-bold transition-all border bg-white border-emerald-500 text-emerald-600 hover:bg-emerald-50 cursor-pointer"
+                          >
+                            ✅ ปรับเป็นสำเร็จ
+                          </button>
+                          <button 
+                            onClick={() => handleDeleteDonation(selectedProvince, index)}
+                            className="text-xs px-3 py-1.5 rounded-full font-bold transition-all border bg-white border-red-500 text-red-600 hover:bg-red-50 cursor-pointer"
+                          >
+                            🗑️ ลบ
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="mt-2 text-xs px-3 py-1.5 rounded-full font-bold text-zinc-400 flex items-center gap-1 cursor-not-allowed bg-zinc-50 border border-zinc-100">
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                          เสร็จสิ้นแล้ว (แก้ไขไม่ได้)
+                        </div>
+                      )}
                     </div>
 
                   </div>
@@ -239,7 +248,6 @@ export default function ThailandMap() {
 
       {/* ส่วนซ้าย: แผนที่ */}
       <div className="relative flex-1 flex items-center justify-center p-4 bg-white shadow-inner overflow-hidden">
-        
         <div className="absolute top-6 left-6 bg-white/90 backdrop-blur-md p-5 rounded-2xl shadow-sm border border-zinc-200 z-10 pointer-events-none">
           <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-4">สถานะโครงการ</h4>
           <div className="space-y-3">
