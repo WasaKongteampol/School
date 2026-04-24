@@ -4,10 +4,10 @@ import sermsukLogo from "../assets/sermsuk-company-logo.png";
 import oishiLogo from "../assets/Oishi_Group_Logo.svg.png";
 import thaibevLogo from "../assets/thaibev-logo.png";
 
-
-import ChiangRaiImg from "../assets/EventChaingrai.png";
-import NakhonSiThammaratImg from "../assets/EventNakhonSiThammarat.png";
-import AyutthayaImg from "../assets/EventAyutthaya.png";
+// 📌 จุดที่แก้ไข: เปลี่ยนนามสกุลไฟล์ให้ตรงกับรูปจริงในโฟลเดอร์ assets เป็น .jpg
+import ChiangRaiNewImg from "../assets/EventChaingrai.jpg";
+import NakhonSiThammaratImg from "../assets/EventNakhonSiThammarat.jpg";
+import AyutthayaImg from "../assets/EventAyutthaya.jpg";
 
 export const geoUrl = "https://raw.githubusercontent.com/cvibhagool/thailand-map/master/thailand-provinces.topojson";
 
@@ -102,7 +102,7 @@ export const generateInitialData = () => {
           company: "บริษัท เสริมสุข จำกัด (มหาชน)", 
           status: 'pending',
           description: "📦 สิ่งที่ได้รับมอบ:\n• หนังสือ 10 หมวดความรู้ จำนวนประมาณ 1,000 เล่ม\n• ชั้นวางหนังสือ เพื่อสร้างมุมการเรียนรู้ในพื้นที่อาคารที่ค่อนข้างจำกัด\n\n🌟 กิจกรรมพิเศษ:\nเน้นกิจกรรม 'อ่านวันละ 15 นาที' เพื่อเป็นการฝึกทักษะการใช้ภาษาไทยให้นักเรียนในพื้นที่สูงคล่องแคล่วขึ้น และใช้การจดบันทึกรักการอ่านเป็นเครื่องมือติดตามพัฒนาการรายบุคคล",
-          images: [ChiangRaiImg]
+          images: [ChiangRaiNewImg]
         }
       ]
     },
