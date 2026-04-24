@@ -5,7 +5,7 @@ import oishiLogo from "../assets/Oishi_Group_Logo.svg.png";
 import thaibevLogo from "../assets/thaibev-logo.png";
 
 
-import ChiangRaiImg from "../assets/EventAyutthaya.png";
+import ChiangRaiImg from "../assets/EventChaingrai.png";
 import NakhonSiThammaratImg from "../assets/EventNakhonSiThammarat.png";
 import AyutthayaImg from "../assets/EventAyutthaya.png";
 
