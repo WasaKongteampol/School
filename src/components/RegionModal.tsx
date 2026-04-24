@@ -1,7 +1,7 @@
 import { ComposableMap, Geographies, Geography, Marker } from "react-simple-maps";
 import { geoCentroid } from "d3-geo";
 import { formatNumber, calculateStatus, getProvinceColor, regionsConfig, provinceThMap, geoUrl } from "../utils/donationConfig";
-import type { ProvinceData, SchoolDonation } from "../utils/donationConfig";
+import type { SchoolDonation, ProvinceData } from "../utils/donationConfig";
 
 interface RegionModalProps {
   selectedRegion: string | null;
@@ -11,7 +11,6 @@ interface RegionModalProps {
   activeProvInRegion: string | null;
   setActiveProvInRegion: (prov: string | null) => void;
   onViewSchoolDetail: (school: SchoolDonation, province: string) => void;
-  // 📌 1. เพิ่ม Prop รับค่าสถานะ Admin
   isAdmin: boolean;
   onCompleteStatus: (province: string, index: number) => void;
   onDeleteDonation: (province: string, index: number) => void;
@@ -21,13 +20,11 @@ export default function RegionModal({ selectedRegion, onClose, regionSummary, do
   if (!selectedRegion || !regionSummary) return null;
   
   const activeProvData = activeProvInRegion ? donationData[activeProvInRegion] : null;
-  const activeProvStatus = activeProvInRegion ? calculateStatus(activeProvData) : "ยังไม่บริจาค";
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6 bg-zinc-900/60 backdrop-blur-sm animate-fade-in">
-      <div className="bg-white w-full max-w-6xl h-[85vh] rounded-3xl shadow-2xl flex flex-col md:flex-row overflow-hidden">
+      <div className="bg-white w-full max-w-6xl h-[85vh] rounded-3xl shadow-2xl flex flex-col md:flex-row overflow-hidden border border-zinc-200">
         
-        {/* แผนที่ภูมิภาค (เหมือนเดิม) */}
         <div className="w-full md:w-[60%] bg-zinc-50 p-6 flex flex-col relative border-r border-zinc-200">
           <h3 className="text-2xl font-extrabold text-emerald-900 mb-2">แผนที่ {selectedRegion}</h3>
           <p className="text-sm text-zinc-500 mb-4">แสดงข้อมูลจากทั้งหมด {regionSummary.provincesCount} จังหวัด (คลิกที่แผนที่เพื่อดูข้อมูล)</p>
@@ -83,14 +80,11 @@ export default function RegionModal({ selectedRegion, onClose, regionSummary, do
                         </div>
                         <p className="text-xs text-zinc-500 font-medium">สนับสนุนโดย: <span className="text-emerald-700 font-bold">{school.company}</span></p>
                       </div>
-                      
                       <div className="pl-2 mt-3 pt-3 border-t border-zinc-50 flex justify-between items-end">
                         <div>
                           <p className="text-[10px] text-zinc-400 font-medium mb-0.5">จำนวนหนังสือ</p>
                           <p className="text-xl font-black text-emerald-600">{formatNumber(school.books)} <span className="text-sm font-bold">เล่ม</span></p>
                         </div>
-                        
-                        {/* 📌 2. เช็คว่าถ้าเป็น Admin ถึงจะแสดงปุ่มให้แก้ในหน้าภูมิภาคได้ด้วย */}
                         <div>
                           {school.status === 'pending' ? (
                             isAdmin ? (
@@ -113,7 +107,6 @@ export default function RegionModal({ selectedRegion, onClose, regionSummary, do
             </div>
           ) : (
             <div className="flex-1 flex flex-col p-8 overflow-hidden animate-fade-in">
-              {/* หน้าภาพรวมภูมิภาค... (เหมือนเดิม) */}
               <div className="flex justify-between items-start mb-8">
                 <div><h4 className="text-sm font-bold uppercase tracking-widest text-emerald-600 mb-1">สรุปข้อมูล</h4><h2 className="text-3xl font-extrabold text-zinc-900">ภาพรวม{selectedRegion}</h2></div>
                 <button onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-full bg-zinc-100 hover:bg-zinc-200 text-zinc-600 transition cursor-pointer shrink-0"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg></button>
