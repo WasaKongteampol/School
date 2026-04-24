@@ -5,9 +5,9 @@ import oishiLogo from "../assets/Oishi_Group_Logo.svg.png";
 import thaibevLogo from "../assets/thaibev-logo.png";
 
 // 📌 แก้ไข: ใช้ URL สำรองแทนการ Import ไฟล์ที่หาไม่เจอ เพื่อให้ Build ผ่าน
-const ChiangRaiNewImg = "https://picsum.photos/seed/chiangrai/800/500";
-const NakhonSiThammaratImg = "https://picsum.photos/seed/nakhon/800/500";
-const AyutthayaImg = "https://picsum.photos/seed/ayu/800/500";
+import ChiangRaiImg from "../assets/EventAyutthaya.png";
+import NakhonSiThammaratImg from "../assets/EventNakhonSiThammarat.png";
+import AyutthayaImg from "../assets/EventAyutthaya.png";
 
 export const geoUrl = "https://raw.githubusercontent.com/cvibhagool/thailand-map/master/thailand-provinces.topojson";
 
@@ -102,7 +102,7 @@ export const generateInitialData = () => {
           company: "บริษัท เสริมสุข จำกัด (มหาชน)", 
           status: 'pending',
           description: "📦 สิ่งที่ได้รับมอบ:\n• หนังสือ 10 หมวดความรู้ จำนวนประมาณ 1,000 เล่ม\n• ชั้นวางหนังสือ เพื่อสร้างมุมการเรียนรู้ในพื้นที่อาคารที่ค่อนข้างจำกัด\n\n🌟 กิจกรรมพิเศษ:\nเน้นกิจกรรม 'อ่านวันละ 15 นาที' เพื่อเป็นการฝึกทักษะการใช้ภาษาไทยให้นักเรียนในพื้นที่สูงคล่องแคล่วขึ้น และใช้การจดบันทึกรักการอ่านเป็นเครื่องมือติดตามพัฒนาการรายบุคคล",
-          images: [ChiangRaiNewImg]
+          images: [ChiangRaiImg]
         }
       ]
     },
