@@ -4,10 +4,10 @@ import sermsukLogo from "../assets/sermsuk-company-logo.png";
 import oishiLogo from "../assets/Oishi_Group_Logo.svg.png";
 import thaibevLogo from "../assets/thaibev-logo.png";
 
-// 📌 แก้ไข: ใช้ URL สำรองแทนการ Import ไฟล์ที่หาไม่เจอ เพื่อให้ Build ผ่าน
-const ChiangRaiNewImg = "https://picsum.photos/seed/chiangrai/800/500";
-const NakhonSiThammaratImg = "https://picsum.photos/seed/nakhon/800/500";
-const AyutthayaImg = "https://picsum.photos/seed/ayu/800/500";
+// 📌 จุดที่แก้ไข: เปลี่ยนนามสกุลไฟล์ให้ตรงกับรูปจริงในโฟลเดอร์ assets เป็น .jpg
+import ChiangRaiNewImg from "../assets/EventChaingrai.jpg";
+import NakhonSiThammaratImg from "../assets/EventNakhonSiThammarat.jpg";
+import AyutthayaImg from "../assets/EventAyutthaya.jpg";
 
 export const geoUrl = "https://raw.githubusercontent.com/cvibhagool/thailand-map/master/thailand-provinces.topojson";
 
