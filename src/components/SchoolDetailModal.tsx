@@ -31,7 +31,6 @@ export default function SchoolDetailModal({ isOpen, onClose, school, province }:
     <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 sm:p-6 bg-zinc-900/70 backdrop-blur-md animate-fade-in">
       <div className="bg-white w-full max-w-[1200px] rounded-[32px] shadow-2xl relative flex flex-col border border-zinc-200">
 
-        {/* ปุ่มปิด */}
         <button onClick={() => { setImgError(false); onClose(); }} className="absolute top-6 right-6 w-12 h-12 flex items-center justify-center rounded-full hover:bg-zinc-100 text-zinc-400 hover:text-zinc-800 transition cursor-pointer z-20">
           <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
         </button>
@@ -44,7 +43,6 @@ export default function SchoolDetailModal({ isOpen, onClose, school, province }:
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
 
-            {/* --- ฝั่งซ้าย: ข้อมูลโรงเรียนและบริษัท --- */}
             <div className="flex flex-col gap-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>
@@ -57,7 +55,6 @@ export default function SchoolDetailModal({ isOpen, onClose, school, province }:
                 </div>
               </div>
 
-              {/* สถิติตัวเลข */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-zinc-50 rounded-3xl p-5 border border-zinc-100 shadow-sm">
                   <p className="text-[11px] text-zinc-500 mb-2 font-bold uppercase tracking-wider">จำนวนเด็กนักเรียน</p>
@@ -69,18 +66,16 @@ export default function SchoolDetailModal({ isOpen, onClose, school, province }:
                 </div>
               </div>
 
-              {/* 📌 ส่วนบริษัทผู้สนับสนุน (Logo & Name) */}
               <div className="pt-1">
                 <p className="text-[11px] text-zinc-400 mb-4 uppercase tracking-[0.2em] font-bold">Official Support By</p>
                 
                 <div className="flex flex-col items-start gap-5">
-                  {/* ชื่อบริษัทขนาดใหญ่ */}
                   <div className="inline-flex items-center gap-4 bg-[#e8f7f0] border border-[#d1ebd9] rounded-2xl px-6 py-4 shadow-sm">
                     <div className="w-4 h-4 rounded-full bg-[#2aaa6c] animate-pulse"></div>
                     <span className="text-2xl font-black text-[#0f6e56] leading-tight">{school.company}</span>
                   </div>
 
-                  {/* 📌 โลโก้แบบขยายเต็มพื้นที่ (ลบ Padding ออก และขยายขนาดกรอบ) */}
+                  {/* 📌 จุดที่แก้ไข: ขยายกรอบโลโก้ให้กว้างขึ้นและลบ Padding ออกเพื่อให้ภาพเต็มกรอบ */}
                   <div className="h-[180px] w-full max-w-[450px] bg-white border border-zinc-200 rounded-[24px] overflow-hidden flex items-center justify-center p-0 shadow-md transition-transform hover:scale-[1.02]">
                     {logoUrl && !imgError ? (
                       <img
@@ -99,7 +94,6 @@ export default function SchoolDetailModal({ isOpen, onClose, school, province }:
               </div>
             </div>
 
-            {/* --- ฝั่งขวา: รูปภาพและคำอธิบายโครงการ --- */}
             <div className="flex flex-col gap-5">
               <div className="rounded-[24px] overflow-hidden shadow-lg aspect-[16/10] bg-zinc-100 flex items-center justify-center relative border border-zinc-200 group">
                 {school.images && school.images.length > 0 ? (
@@ -118,7 +112,6 @@ export default function SchoolDetailModal({ isOpen, onClose, school, province }:
                 )}
               </div>
 
-              {/* กล่องคำอธิบายสีเข้ม */}
               <div className="bg-zinc-900 rounded-[24px] p-6 shadow-md border border-zinc-800">
                 <p className="text-[10px] text-zinc-500 mb-2 font-bold uppercase tracking-widest border-b border-zinc-800 pb-2">Project Description</p>
                 <p className="text-[14px] text-zinc-300 leading-[1.7] font-medium whitespace-pre-line text-left">
