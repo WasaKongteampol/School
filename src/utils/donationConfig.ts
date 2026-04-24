@@ -4,7 +4,7 @@ import sermsukLogo from "../assets/sermsuk-company-logo.png";
 import oishiLogo from "../assets/Oishi_Group_Logo.svg.png";
 import thaibevLogo from "../assets/thaibev-logo.png";
 
-// 📌 แก้ไข: ใช้ URL สำรองแทนการ Import ไฟล์ที่หาไม่เจอ เพื่อให้ Build ผ่าน
+
 import ChiangRaiImg from "../assets/EventAyutthaya.png";
 import NakhonSiThammaratImg from "../assets/EventNakhonSiThammarat.png";
 import AyutthayaImg from "../assets/EventAyutthaya.png";
