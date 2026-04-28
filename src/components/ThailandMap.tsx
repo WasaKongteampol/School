@@ -27,7 +27,6 @@ export default function ThailandMap() {
   const [searchTerm, setSearchTerm] = useState("");
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
 
-  // 📌 สร้าง State ควบคุมสิทธิ์ (ค่าเริ่มต้นเป็น User)
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => { setIsListModalOpen(false); }, [selectedProvince]);
@@ -79,6 +78,9 @@ export default function ThailandMap() {
   const provinceData = selectedProvince ? donationData[selectedProvince] : null;
   const currentProvinceStatus = calculateStatus(provinceData);
 
+  // 📌 เพิ่มลอจิกคัดกรองนับชื่อโรงเรียนที่ไม่ซ้ำกัน สำหรับแสดงใน Side Panel ด้านขวา
+  const activeProvUniqueSchools = provinceData?.schools ? new Set(provinceData.schools.map(s => s.name)).size : 0;
+
   const nationalTotalBooks = useMemo(() => Object.values(donationData).reduce((sum, item) => sum + item.totalBooks, 0), [donationData]);
   const filteredProvinces = useMemo(() => !searchTerm ? [] : allProvinceNames.filter(prov => prov.includes(searchTerm)), [searchTerm]);
 
@@ -88,7 +90,9 @@ export default function ThailandMap() {
     regionsConfig[selectedRegion].provinces.forEach(prov => {
       if (donationData[prov]) {
         totalBooks += donationData[prov].totalBooks;
-        totalSchools += donationData[prov].schools.length;
+        // 📌 แก้ไขลอจิกการนับให้เป็น Unique School ตรงนี้ด้วย เพื่อความชัวร์
+        const uniqueNames = new Set(donationData[prov].schools.map(s => s.name));
+        totalSchools += uniqueNames.size; 
       }
     });
     return { totalBooks, totalSchools, provincesCount: regionsConfig[selectedRegion].provinces.length };
@@ -99,14 +103,13 @@ export default function ThailandMap() {
       
       <AddDonationModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} onSave={handleAddNewDonation} selectedProvince={selectedProvince || ""} companies={thaiBevCompanies} />
       
-      {/* 📌 ส่ง isAdmin ไปให้ Popup ย่อยเพื่อซ่อน/แสดงปุ่ม */}
       <ProvinceModal isOpen={isListModalOpen} onClose={() => setIsListModalOpen(false)} selectedProvince={selectedProvince} provinceData={provinceData} currentProvinceStatus={currentProvinceStatus} onCompleteStatus={handleCompleteStatus} onDeleteDonation={handleDeleteDonation} onViewSchoolDetail={(school, prov) => setSelectedSchoolDetail({school, province: prov})} isAdmin={isAdmin} />
       
       <RegionModal selectedRegion={selectedRegion} onClose={() => setSelectedRegion(null)} regionSummary={regionSummary} donationData={donationData} activeProvInRegion={activeProvInRegion} setActiveProvInRegion={setActiveProvInRegion} onViewSchoolDetail={(school, prov) => setSelectedSchoolDetail({school, province: prov})} isAdmin={isAdmin} onCompleteStatus={handleCompleteStatus} onDeleteDonation={handleDeleteDonation} />
       
       <SchoolDetailModal isOpen={!!selectedSchoolDetail} onClose={() => setSelectedSchoolDetail(null)} school={selectedSchoolDetail?.school || null} province={selectedSchoolDetail?.province || ""} />
 
-      {/* แผนที่ซ้ายมือ... */}
+      {/* แผนที่ซ้ายมือ */}
       <div className="relative flex-1 flex items-center justify-center p-4 bg-white shadow-inner overflow-hidden">
         <div className="absolute top-6 left-6 bg-white/90 backdrop-blur-md p-5 rounded-2xl shadow-sm border border-zinc-200 z-10 pointer-events-none">
           <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-4">สถานะโครงการ</h4>
@@ -175,7 +178,6 @@ export default function ThailandMap() {
       {/* ส่วนขวา: Side Panel สรุปข้อมูล */}
       <div className="w-full md:w-[380px] lg:w-[450px] border-l border-zinc-200 p-8 md:p-10 flex flex-col bg-white z-10 shadow-[-10px_0_30px_rgba(0,0,0,0.02)] h-screen">
         
-        {/* 📌 ปรับ Header เพื่อใส่ สวิตช์สลับโหมด Admin / User */}
         <header className="mb-8 shrink-0 flex justify-between items-start">
           <div>
             <h1 className="text-sm font-bold uppercase tracking-widest text-emerald-600 mb-2 flex items-center gap-2">
@@ -235,7 +237,8 @@ export default function ThailandMap() {
               <div className="space-y-3">
                 <h4 className="text-lg font-semibold text-zinc-800">ข้อมูลสรุป</h4>
                 <div className="grid grid-cols-2 gap-4">
-                  <InfoCard title="โรงเรียนที่รับมอบ" value={`${formatNumber(provinceData.schools.length)} แห่ง`} />
+                  {/* 📌 จุดที่แก้ไข: แสดงจำนวนโรงเรียนที่ไม่ซ้ำกันแทนจำนวนโปรเจกต์ */}
+                  <InfoCard title="โรงเรียนที่รับมอบ" value={`${formatNumber(activeProvUniqueSchools)} แห่ง`} />
                   <InfoCard title="สถานะ" value={currentProvinceStatus} />
                 </div>
               </div>
@@ -248,7 +251,7 @@ export default function ThailandMap() {
           ) : (
             <div className="h-full flex flex-col items-center justify-start pt-2 pb-10 animate-fade-in">
               <div className="w-24 h-24 rounded-full bg-emerald-50 flex items-center justify-center mb-6 border border-emerald-100 shadow-sm">
-                <svg className="w-12 h-12 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+                <svg className="w-12 h-12 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0-3.332.477-4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
               </div>
               <h3 className="text-xl font-bold text-zinc-800 mb-2">ยอดบริจาคทั้งประเทศ</h3>
               <p className="text-5xl font-black text-emerald-600 mb-8">{formatNumber(nationalTotalBooks)} <span className="text-2xl">เล่ม</span></p>
@@ -267,7 +270,6 @@ export default function ThailandMap() {
           )}
         </div>
 
-        {/* 📌 3. เช็คสถานะ Admin ซ่อน/แสดงปุ่มเพิ่มข้อมูลด้านล่างสุด */}
         {selectedProvince && isAdmin && (
           <div className="shrink-0 pt-6 border-t border-zinc-100 mt-auto animate-fade-in">
             <button onClick={() => setIsAddModalOpen(true)} className="w-full flex items-center justify-center gap-2 px-6 py-4 rounded-xl bg-zinc-900 text-white font-bold text-md hover:bg-zinc-800 hover:shadow-lg transition-all cursor-pointer">

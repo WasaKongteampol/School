@@ -10,12 +10,15 @@ interface ProvinceModalProps {
   onCompleteStatus: (province: string, index: number) => void;
   onDeleteDonation: (province: string, index: number) => void;
   onViewSchoolDetail: (school: SchoolDonation, province: string) => void;
-  // 📌 1. เพิ่ม Prop รับค่าสถานะ Admin
   isAdmin: boolean;
 }
 
 export default function ProvinceModal({ isOpen, onClose, selectedProvince, provinceData, currentProvinceStatus, onCompleteStatus, onDeleteDonation, onViewSchoolDetail, isAdmin }: ProvinceModalProps) {
   if (!isOpen || !selectedProvince || !provinceData) return null;
+
+  // 📌 คำนวณจำนวนโรงเรียนที่ไม่ซ้ำกัน และ จำนวนโครงการทั้งหมด
+  const uniqueSchoolCount = new Set(provinceData.schools.map(s => s.name)).size;
+  const projectCount = provinceData.schools.length;
 
   return (
     <div className="fixed inset-0 z-[40] flex items-center justify-center p-4 sm:p-6 bg-zinc-900/40 backdrop-blur-sm animate-fade-in">
@@ -24,7 +27,8 @@ export default function ProvinceModal({ isOpen, onClose, selectedProvince, provi
           <div>
             <h3 className="text-2xl font-extrabold text-zinc-900">โครงการใน {selectedProvince}</h3>
             <p className="text-sm text-zinc-500 mt-1">
-              สถานะภาพรวม: <span className="font-bold text-emerald-600">{currentProvinceStatus}</span> (จำนวน {provinceData.schools.length} โรงเรียน)
+              {/* 📌 จุดที่แก้ไข: เปลี่ยนข้อความให้แสดงยอดโครงการ และ ยอดโรงเรียนที่ถูกต้อง */}
+              สถานะภาพรวม: <span className="font-bold text-emerald-600">{currentProvinceStatus}</span> ({projectCount} โครงการ จาก {uniqueSchoolCount} โรงเรียน)
             </p>
           </div>
           <button onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-full bg-zinc-100 hover:bg-zinc-200 text-zinc-600 transition cursor-pointer">
@@ -52,7 +56,6 @@ export default function ProvinceModal({ isOpen, onClose, selectedProvince, provi
                 <div className="text-left sm:text-right pl-3 sm:pl-0 flex flex-col items-start sm:items-end">
                   <p className="text-2xl font-black text-emerald-600">{formatNumber(school.books)} <span className="text-lg font-bold">เล่ม</span></p>
                   
-                  {/* 📌 2. เช็คว่าถ้าเป็น Admin ถึงจะแสดงปุ่มแก้ไข ถ้าไม่ใช่ให้แสดงแค่ป้ายสถานะ */}
                   {school.status === 'pending' ? (
                     isAdmin ? (
                       <div className="flex gap-2 mt-2">
