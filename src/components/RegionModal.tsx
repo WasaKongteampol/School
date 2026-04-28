@@ -21,35 +21,99 @@ export default function RegionModal({ selectedRegion, onClose, regionSummary, do
   
   const activeProvData = activeProvInRegion ? donationData[activeProvInRegion] : null;
 
+  // คำนวณจำนวนโรงเรียนที่ไม่ซ้ำกันในภูมิภาค
+  const totalUniqueSchoolsInRegion = regionsConfig[selectedRegion].provinces.reduce((total, prov) => {
+    const schools = donationData[prov]?.schools || [];
+    const uniqueNames = new Set(schools.map(s => s.name));
+    return total + uniqueNames.size;
+  }, 0);
+
+  const activeProvSchools = activeProvData?.schools || [];
+  const uniqueSchoolCountInProv = new Set(activeProvSchools.map(s => s.name)).size;
+  const projectCountInProv = activeProvSchools.length;
+
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6 bg-zinc-900/60 backdrop-blur-sm animate-fade-in">
       <div className="bg-white w-full max-w-6xl h-[85vh] rounded-3xl shadow-2xl flex flex-col md:flex-row overflow-hidden border border-zinc-200">
         
+        {/* --- ฝั่งซ้าย: แผนที่ภูมิภาค --- */}
         <div className="w-full md:w-[60%] bg-zinc-50 p-6 flex flex-col relative border-r border-zinc-200">
           <h3 className="text-2xl font-extrabold text-emerald-900 mb-2">แผนที่ {selectedRegion}</h3>
-          <p className="text-sm text-zinc-500 mb-4">แสดงข้อมูลจากทั้งหมด {regionSummary.provincesCount} จังหวัด (คลิกที่แผนที่เพื่อดูข้อมูล)</p>
-          <div className="flex-1 flex items-center justify-center relative bg-white rounded-2xl border border-zinc-200 shadow-inner overflow-hidden">
-            <ComposableMap projection="geoMercator" projectionConfig={{ scale: regionsConfig[selectedRegion].scale, center: regionsConfig[selectedRegion].center }} className="w-full h-full">
-              <Geographies geography={geoUrl}>
-                {({ geographies }) => geographies.map((geo) => {
-                    const provNameTh = provinceThMap[geo.properties.NAME_1] || geo.properties.NAME_1;
-                    if (!regionsConfig[selectedRegion].provinces.includes(provNameTh)) return null;
-                    const statusText = calculateStatus(donationData[provNameTh]);
-                    const fillColor = getProvinceColor(statusText);
-                    const centroid = geoCentroid(geo);
-                    const isActive = activeProvInRegion === provNameTh;
-                    return (
-                      <g key={geo.rsmKey}>
-                        <Geography geography={geo} onClick={() => setActiveProvInRegion(provNameTh)} className="cursor-pointer outline-none transition-all duration-300" style={{ default: { fill: fillColor, stroke: isActive ? "#10b981" : "#ffffff", strokeWidth: isActive ? 2.5 : 0.5 }, hover: { fill: fillColor, opacity: 0.8, stroke: "#10b981", strokeWidth: 2 }, pressed: { fill: fillColor, stroke: "#10b981", strokeWidth: 3 } }} />
-                        <Marker coordinates={centroid}><text textAnchor="middle" y={1.5} className="pointer-events-none select-none font-bold transition-colors" style={{ fontSize: "14px", fill: statusText === "บริจาคซ้ำ" ? "#ffffff" : "#1e293b", paintOrder: "stroke fill", stroke: statusText === "บริจาคซ้ำ" ? "#0f172a" : "#ffffff", strokeWidth: "3px" }}>{provNameTh}</text></Marker>
-                      </g>
-                    );
-                })}
-              </Geographies>
-            </ComposableMap>
+          <p className="text-sm text-zinc-500 mb-4">แสดงข้อมูลจากทั้งหมด {regionsConfig[selectedRegion].provinces.length} จังหวัด (คลิกที่แผนที่เพื่อดูข้อมูล)</p>
+          
+          <div className="flex-1 flex items-center justify-center relative bg-white rounded-2xl border border-zinc-200 overflow-hidden p-4">
+            <div className="w-full h-full flex items-center justify-center transition-all" style={{ filter: "drop-shadow(0px 15px 25px rgba(0,0,0,0.15))" }}>
+              <ComposableMap 
+                projection="geoMercator" 
+                projectionConfig={{ 
+                  scale: regionsConfig[selectedRegion].scale, 
+                  center: regionsConfig[selectedRegion].center 
+                }} 
+                className="w-full h-full cursor-pointer"
+              >
+                <Geographies geography={geoUrl}>
+                  {({ geographies }) => geographies.map((geo) => {
+                      const provNameTh = provinceThMap[geo.properties.NAME_1] || geo.properties.NAME_1;
+                      if (!regionsConfig[selectedRegion].provinces.includes(provNameTh)) return null;
+                      const statusText = calculateStatus(donationData[provNameTh]);
+                      const fillColor = getProvinceColor(statusText);
+                      const centroid = geoCentroid(geo);
+                      const isActive = activeProvInRegion === provNameTh;
+
+                      return (
+                        <g key={geo.rsmKey}>
+                          <Geography 
+                            geography={geo} 
+                            onClick={() => setActiveProvInRegion(provNameTh)} 
+                            className="outline-none transition-all duration-200" 
+                            style={{ 
+                              default: { 
+                                fill: fillColor, 
+                                stroke: isActive ? "#059669" : "#ffffff", 
+                                strokeWidth: isActive ? 2.5 : 1.5, // 📌 เพิ่มความหนาเส้นขอบตัดแยกจังหวัด
+                                strokeLinejoin: "round"
+                              }, 
+                              hover: { 
+                                fill: fillColor, 
+                                opacity: 0.85, 
+                                stroke: "#ffffff", 
+                                strokeWidth: 2,
+                                cursor: "pointer"
+                              }, 
+                              pressed: { 
+                                fill: fillColor, 
+                                stroke: "#059669", 
+                                strokeWidth: 2.5 
+                              } 
+                            }} 
+                          />
+                          <Marker coordinates={centroid}>
+                            <text 
+                              textAnchor="middle" 
+                              y={1.5} 
+                              className="pointer-events-none select-none font-bold" 
+                              style={{ 
+                                // 📌 ลดไซส์ตัวหนังสือลงถ้านี่คือ "ภาคกลาง" เพื่อไม่ให้ชื่อขี่กัน
+                                fontSize: selectedRegion === "ภาคกลาง" ? "10px" : "13px", 
+                                fill: statusText === "บริจาคซ้ำ" ? "#ffffff" : "#1e293b", 
+                                paintOrder: "stroke fill", 
+                                stroke: statusText === "บริจาคซ้ำ" ? "#0f172a" : "#ffffff", 
+                                strokeWidth: "2.5px" // ลดความหนาขอบตัวอักษรลงนิดนึงให้อ่านง่ายขึ้น
+                              }}
+                            >
+                              {provNameTh}
+                            </text>
+                          </Marker>
+                        </g>
+                      );
+                  })}
+                </Geographies>
+              </ComposableMap>
+            </div>
           </div>
         </div>
 
+        {/* --- ฝั่งขวา: ส่วนแสดงข้อมูล --- */}
         <div className="w-full md:w-[40%] flex flex-col bg-white">
           {activeProvInRegion ? (
             <div className="flex-1 flex flex-col p-8 overflow-hidden animate-fade-in relative">
@@ -68,9 +132,11 @@ export default function RegionModal({ selectedRegion, onClose, regionSummary, do
               </div>
 
               <div className="flex-1 overflow-y-auto pr-2">
-                <h4 className="text-sm font-bold text-zinc-500 mb-3 border-b border-zinc-100 pb-2">รายชื่อโรงเรียน ({activeProvData?.schools.length || 0} แห่ง)</h4>
+                <h4 className="text-sm font-bold text-zinc-500 mb-3 border-b border-zinc-100 pb-2">
+                  รายการสนับสนุน ({projectCountInProv} โครงการ จาก {uniqueSchoolCountInProv} โรงเรียน)
+                </h4>
                 <div className="space-y-3">
-                  {activeProvData && activeProvData.schools.length > 0 ? activeProvData.schools.map((school, index) => (
+                  {activeProvSchools.length > 0 ? activeProvSchools.map((school, index) => (
                     <div key={index} className="flex flex-col p-4 rounded-2xl border border-zinc-200 bg-white shadow-sm transition-shadow relative overflow-hidden">
                       <div className={`absolute top-0 bottom-0 left-0 w-1.5 transition-colors ${school.status === 'completed' ? 'bg-emerald-500' : 'bg-[#ce9a2d]'}`}></div>
                       <div className="pl-2">
@@ -111,10 +177,18 @@ export default function RegionModal({ selectedRegion, onClose, regionSummary, do
                 <div><h4 className="text-sm font-bold uppercase tracking-widest text-emerald-600 mb-1">สรุปข้อมูล</h4><h2 className="text-3xl font-extrabold text-zinc-900">ภาพรวม{selectedRegion}</h2></div>
                 <button onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-full bg-zinc-100 hover:bg-zinc-200 text-zinc-600 transition cursor-pointer shrink-0"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg></button>
               </div>
+              
               <div className="grid grid-cols-2 gap-4 mb-8 shrink-0">
-                <div className="bg-emerald-50 p-5 rounded-2xl border border-emerald-100"><p className="text-sm text-emerald-700 font-medium mb-1">หนังสือรวม</p><p className="text-3xl font-black text-emerald-600">{formatNumber(regionSummary.totalBooks)}</p></div>
-                <div className="bg-amber-50 p-5 rounded-2xl border border-amber-100"><p className="text-sm text-amber-700 font-medium mb-1">โรงเรียนที่รับมอบ</p><p className="text-3xl font-black text-amber-600">{formatNumber(regionSummary.totalSchools)}</p></div>
+                <div className="bg-emerald-50 p-5 rounded-2xl border border-emerald-100">
+                  <p className="text-sm text-emerald-700 font-medium mb-1">หนังสือรวม</p>
+                  <p className="text-3xl font-black text-emerald-600">{formatNumber(regionSummary.totalBooks)}</p>
+                </div>
+                <div className="bg-amber-50 p-5 rounded-2xl border border-amber-100">
+                  <p className="text-sm text-amber-700 font-medium mb-1">โรงเรียนที่รับมอบ</p>
+                  <p className="text-3xl font-black text-amber-600">{formatNumber(totalUniqueSchoolsInRegion)}</p>
+                </div>
               </div>
+
               <div className="flex-1 overflow-y-auto pr-2">
                 <h4 className="text-sm font-bold text-zinc-500 mb-3 border-b border-zinc-100 pb-2">ยอดบริจาคแยกรายจังหวัด</h4>
                 <div className="space-y-2">
